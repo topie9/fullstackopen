@@ -10,6 +10,7 @@ note over palvelin:
 Palvelin luo uutta muistiinpanoa vastaavan olion ja laittaa
 sen muistiinpanot sisältävään taulukkoon nimeltään notes
 end note
+palvelin-->selain: HTTP-statuskoodi 302
 selain->palvelin: HTTP GET https://fullstack-exampleapp.herokuapp.com/notes
 palvelin-->selain: HTML-koodi
 selain->palvelin: HTTP GET https://fullstack-exampleapp.herokuapp.com/main.css
@@ -29,6 +30,7 @@ note over selain:
 selain suorittaa tapahtumankäsittelijän
 joka renderöi muistiinpanot näytölle
 end note
+
 
 --------------------
 Tehtävä 0.5
@@ -61,6 +63,7 @@ Tehtävä 0.6
 title 0.6 uuden muistiinpanon lisääminen SPA sivulla
 
 selain->palvelin: HTTP POST https://fullstack-exampleapp.herokuapp.com/new_note_spa
+palvelin-->selain: HTTP-statuskoodi 201
 
 note over selain:
 selain pysyy samalla sivulla ja
