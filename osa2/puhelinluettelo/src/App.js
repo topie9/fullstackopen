@@ -1,39 +1,76 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import PersonForm from './PersonForm.js'
-import PhoneNumbers from './PhoneNumbers.js'
-import Filter from './Filter.js'
+import PersonForm from './components/PersonForm.js'
+import Person from './components/Person.js'
+import Filter from './components/Filter.js'
+import personService from './services/persons.js'
 
 
 const App = () => {
   const [persons, setPersons] = useState([])
-  const [ newName, setNewName ] = useState('')
-  const [ newNumber, setNewNumber] = useState('')
-  const [ personFilter, setPersonFilter] = useState('')
+  const [newName, setNewName] = useState('')
+  const [newNumber, setNewNumber] = useState('')
+  const [personFilter, setPersonFilter] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
-      })
+    personService
+      .getAll()
+        .then(initialPersons => {
+          setPersons(initialPersons)
+        })
   }, [])
 
   const addPerson = (event) => {
     event.preventDefault()
+    const personFound = persons.find(person => person.name === newName)
+    if (personFound) {
+      updatePerson(personFound)
+    }
+    else {
+      const newPerson = {
+        name: newName,
+        number: newNumber
+      }
+      personService
+        .create(newPerson)
+          .then(returnedPerson => {
+            setPersons(persons.concat(returnedPerson))
+            setNewName('')
+            setNewNumber('')
+          })
+          .catch(error => {
+            console.log('create person failed:', error)
+          })
+    }
+  }
 
-    const nameExists = persons.find(person => person.name === newName)
-    if (nameExists) {
-      window.alert(`${newName} is already added to phonebook`)
-      return
+  const updatePerson = (personFound) => {
+    const dialog = `${personFound.name} is already added to phonebook, replace the old number with a new one?`
+    const confirmUpdate = window.confirm(dialog)
+
+    if (confirmUpdate) {
+      const changedPerson = { ...personFound, number: newNumber}
+      personService
+        .update(changedPerson.id, changedPerson)
+          .then(returnedPerson => {
+            setPersons(persons.map(p => p.id !== changedPerson.id ? p : returnedPerson))
+            setNewName('')
+            setNewNumber('')
+          })
     }
-    const newPerson = {
-      name: newName,
-      number: newNumber
+  }
+
+  const delPersonOf = (id, name) => {
+    const confirmDelete = window.confirm(`Delete ${name}`)
+    if (confirmDelete) {
+      personService
+        .remove(id)
+          .then(() => {
+            setPersons(persons.filter(n => n.id !== id))
+          })
+          .catch(error => {
+            console.log('delete person failed:', error)
+          })
     }
-    setPersons(persons.concat(newPerson))
-    setNewName('')
-    setNewNumber('')
   }
 
   const handleNameChange = (event) => (setNewName(event.target.value))
@@ -43,6 +80,15 @@ const App = () => {
   const personsToShow = personFilter === ''
     ? persons
     : persons.filter(person => person.name.toLowerCase().includes(personFilter.toLowerCase()))
+
+  const rows = personsToShow.map(person => 
+    <Person 
+      key={person.id}
+      name={person.name}
+      number={person.number}
+      delPerson={() => delPersonOf(person.id, person.name)}
+    />
+  )
 
   return (
     <div>
@@ -62,7 +108,7 @@ const App = () => {
       />
 
       <h3>Numbers</h3>
-      <PhoneNumbers persons={personsToShow} />
+      {rows}
     </div>
   )
 }
