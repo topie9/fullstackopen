@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import PersonForm from './components/PersonForm.js'
 import Person from './components/Person.js'
 import Filter from './components/Filter.js'
+import Notification from './components/Notification.js'
 import personService from './services/persons.js'
 
 
@@ -10,6 +11,7 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [personFilter, setPersonFilter] = useState('')
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => {
     personService
@@ -36,9 +38,18 @@ const App = () => {
             setPersons(persons.concat(returnedPerson))
             setNewName('')
             setNewNumber('')
+            setNotification({
+              message: `Added ${returnedPerson.name}`,
+              type: 'success'
+            })
+            setTimeout(() => setNotification(null), 5000)
           })
           .catch(error => {
-            console.log('create person failed:', error)
+            setNotification({
+              message: `${newPerson.name} could not be added to server`,
+              type: 'error'
+            })
+            setTimeout(() => setNotification(null), 5000)
           })
     }
   }
@@ -55,6 +66,19 @@ const App = () => {
             setPersons(persons.map(p => p.id !== changedPerson.id ? p : returnedPerson))
             setNewName('')
             setNewNumber('')
+            setNotification({
+              message: `Updated number for ${returnedPerson.name}`,
+              type: 'success'
+            })
+            setTimeout(() => setNotification(null), 5000)
+          })
+          .catch(error => {
+            setPersons(persons.filter(p => p.id !== changedPerson.id))
+            setNotification({
+              message: `${personFound.name} was already removed from server`,
+              type: 'error'
+            })
+            setTimeout(() => setNotification(null), 5000)
           })
     }
   }
@@ -66,9 +90,19 @@ const App = () => {
         .remove(id)
           .then(() => {
             setPersons(persons.filter(n => n.id !== id))
+            setNotification({
+              message: `Deleted ${name}`,
+              type: 'success'
+            })
+            setTimeout(() => setNotification(null), 5000)
           })
           .catch(error => {
-            console.log('delete person failed:', error)
+            setPersons(persons.filter(n => n.id !== id))
+            setNotification({
+              message: `${name} was already removed from server`,
+              type: 'error'
+            })
+            setTimeout(() => setNotification(null), 5000)
           })
     }
   }
@@ -93,6 +127,10 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification 
+        message={(notification) ? notification.message : null} 
+        type={(notification) ? notification.type : null}
+      />
       <Filter 
         filter={personFilter}
         handlePersonFilter={handlePersonFilter} 
